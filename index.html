@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freestyle Drawer</title>
+    <style>
+        canvas {
+            border: 1px solid #000;
+            cursor: crosshair;
+        }
+        .toolbar {
+            margin-bottom: 10px;
+        }
+        #textInput {
+            display: none;
+            position: absolute;
+            border: 1px solid #000;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Freestyle Drawer</h1>
+    <div class="toolbar">
+        <button onclick="changeColor('black')">Black</button>
+        <button onclick="changeColor('red')">Red</button>
+        <button onclick="changeColor('blue')">Blue</button>
+        <button onclick="changeColor('green')">Green</button>
+        <button onclick="eraser()">Eraser</button>
+        <button onclick="clearCanvas()">Clear</button>
+        <button onclick="undo()">Undo</button>
+        <button onclick="redo()">Redo</button>
+        <button onclick="setDrawMode('pen')">Pen</button>
+        <button onclick="setDrawMode('rectangle')">Rectangle</button>
+        <button onclick="setDrawMode('circle')">Circle</button>
+        <button onclick="setDrawMode('text')">Text</button>
+        <button onclick="saveCanvas()">Save</button>
+    </div>
+    <canvas id="whiteboard" width="800" height="600"></canvas>
+    <input type="text" id="textInput" onblur="addTextToCanvas(event)">
+    <script>
+        const canvas = document.getElementById('whiteboard');
+        const ctx = canvas.getContext('2d');
+        const textInput = document.getElementById('textInput');
+
+        let drawing = false;
+        let currentColor = 'black';
+        let lineWidth = 5;
+        let drawMode = 'pen';
+        let startX, startY;
+        let undoStack = [];
+        let redoStack = [];
+
+        canvas.addEventListener('mousedown', (event) => {
+            drawing = true;
+            startX = event.clientX - canvas.offsetLeft;
+            startY = event.clientY - canvas.offsetTop;
+            if (drawMode === 'pen') {
+                ctx.beginPath();
+                saveState();
+            } else if (drawMode === 'text') {
+                textInput.style.display = 'block';
+                textInput.style.left = `${event.clientX}px`;
+                textInput.style.top = `${event.clientY}px`;
+                textInput.focus();
+                drawing = false;
+            }
+        });
+
+        canvas.addEventListener('mouseup', (event) => {
+            drawing = false;
+            if (drawMode !== 'pen' && drawMode !== 'text') {
+                drawShape(event);
+                saveState();
+            }
+            ctx.beginPath();
+        });
+
+        canvas.addEventListener('mousemove', draw);
+
+        function draw(event) {
+            if (!drawing || drawMode !== 'pen') return;
+
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = currentColor;
+
+            ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+        }
+
+        function drawShape(event) {
+            const endX = event.clientX - canvas.offsetLeft;
+            const endY = event.clientY - canvas.offsetTop;
+
+            ctx.lineWidth = lineWidth;
+            ctx.strokeStyle = currentColor;
+
+            if (drawMode === 'rectangle') {
+                ctx.strokeRect(startX, startY, endX - startX, endY - startY);
+            } else if (drawMode === 'circle') {
+                const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+                ctx.beginPath();
+                ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        function changeColor(color) {
+            currentColor = color;
+            lineWidth = 5;
+        }
+
+        function eraser() {
+            currentColor = 'white';
+            lineWidth = 10;
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            saveState();
+        }
+
+        function setDrawMode(mode) {
+            drawMode = mode;
+        }
+
+        function saveState() {
+            undoStack.push(canvas.toDataURL());
+            redoStack = [];
+        }
+
+        function undo() {
+            if (undoStack.length === 0) return;
+            redoStack.push(undoStack.pop());
+            restoreState();
+        }
+
+        function redo() {
+            if (redoStack.length === 0) return;
+            undoStack.push(redoStack.pop());
+            restoreState();
+        }
+
+        function restoreState() {
+            const img = new Image();
+            img.src = undoStack.length > 0 ? undoStack[undoStack.length - 1] : '';
+            img.onload = function () {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+            }
+        }
+
+        function saveCanvas() {
+            const link = document.createElement('a');
+            link.download = 'whiteboard.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function addTextToCanvas(event) {
+            const text = textInput.value;
+            if (text.trim() !== '') {
+                ctx.fillStyle = currentColor;
+                ctx.font = '20px Arial';
+                ctx.fillText(text, startX, startY);
+                saveState();
+            }
+            textInput.style.display = 'none';
+            textInput.value = '';
+        }
+    </script>
+
+
+</body>
+</html>

@@ -1,0 +1,54 @@
+ /* Existing CSS */
+canvas {
+    border: 1px solid #000;
+    cursor: crosshair;
+}
+.toolbar {
+    margin-bottom: 10px;
+}
+#textInput {
+    display: none;
+    position: absolute;
+    border: 1px solid #000;
+    z-index: 1000;
+}
+
+/* New CSS for background picture loading animation */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+.background-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('360_F_803030310_pc6jM9cLb97XQX1JeIo2c8AKIgFFat9u.jpg'); /* Replace with your image URL */
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+.loading-spinner {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+    position: absolute;
+    z-index: 1000;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
